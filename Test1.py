@@ -37,21 +37,34 @@ while True:
     # - - - LOAD SENSOR VALUES - - -
     #angle = sGyro.value()
     #print(str(angle) + " " + units)
-    sColorVal_prev = sColorVal
-    sColorVal = [sColorL.value(), sColorR.value()]
-    print("Color sensor left: " + str(sColorVal[0]) + "    right: " + str(sColorVal[1]))
+    #sColorVal_prev = sColorVal
+    #sColorVal = [sColorL.value(), sColorR.value()]
+    sensor_val_R_prev = sensor_val_R
+    sensor_val_R = sColorR.value()
+
+    sensor_val_L_prev = sensor_val_L
+    sensor_val_L = sColorL.value()
+    
+    print("Color sensor left: " + sensor_val_L + "    right: " + sensor_val_R)
 
     # - - - LINE FOLLOWING - - -
-    #sColorVal[0] = A
-    #sColorVal[1] = B
-    w_a = mu * sColorVal[0]/100 * (sColorVal[1] - sColorVal_prev[1])/100
-    w_b = mu * sColorVal[1]/100 * (sColorVal[0] - sColorVal_prev[0])/100
-    Y_R = w_a * sColorVal[0]
-    Y_L = w_b * sColorVal[1]
+    #sColorVal[0] = A = L
+    #sColorVal[1] = B = R
+
+    w_R = mu * sensor_val_L * (sensor_val_R-sensor_val_R_prev)
+    w_L = mu * sensor_val_R * (sensor_val_L-sensor_val_L_prev)
+
+    y_L = w_L * sensor_val_L/100
+    y_R = w_R * sensor_val_R/100
+
+    #w_a = mu * sColorVal[0]/100 * (sColorVal[1] - sColorVal_prev[1])/100
+    #w_b = mu * sColorVal[1]/100 * (sColorVal[0] - sColorVal_prev[0])/100
+    #Y_R = w_a * sColorVal[0]
+    #Y_L = w_b * sColorVal[1]
     print(str(sColorVal[0]) + " " +str(sColorVal[1]) + " " +str(w_a) + " " + str(w_b) + " " + str(Y_R) + " " + str(Y_L))
 
-    mLeft.duty_cycle_sp = -15 - Y_L
-    mRight.duty_cycle_sp = -15 - Y_R
+    #mLeft.duty_cycle_sp = -15 - Y_L
+    #mRight.duty_cycle_sp = -15 - Y_R
 
     sleep(0.5)
     if btn.any():
