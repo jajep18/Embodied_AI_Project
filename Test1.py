@@ -14,6 +14,7 @@ mLeft.run_direct()
 BASE_SPEED = -30
 TURN_SPEED = -80
 
+
 # - - - - - - - - - - SETUP SENSORS - - - - - - - - - -
 btn     = ev3.Button()           # Control block buttons
 #sTouch = ev3.TouchSensor('in2')
@@ -61,7 +62,9 @@ while True:
     #w_b = mu * sColorVal[1]/100 * (sColorVal[0] - sColorVal_prev[0])/100
     #Y_R = w_a * sColorVal[0]
     #Y_L = w_b * sColorVal[1]
-    print(str(sColorVal[0]) + " " +str(sColorVal[1]) + " " +str(w_a) + " " + str(w_b) + " " + str(Y_R) + " " + str(Y_L))
+    #print(str(sColorVal[0]) + " " +str(sColorVal[1]) + " " +str(w_a) + " " + str(w_b) + " " + str(Y_R) + " " + str(Y_L))
+
+    print("Inputs: " + str(w_L) + " " + str(w_R) + ". Outputs: " + y_L + " " + y_R )
 
     #mLeft.duty_cycle_sp = -15 - Y_L
     #mRight.duty_cycle_sp = -15 - Y_R
