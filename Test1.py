@@ -19,6 +19,7 @@ TURN_SPEED = -80
 btn     = ev3.Button()           # Control block buttons
 #sTouch = ev3.TouchSensor('in2')
 #sGyro   = ev3.GyroSensor('in1')  # Gyro sensor
+sColorTouch = ev3.LightSensor('in2') # Touch color sensor (claw)
 sColorR = ev3.ColorSensor('in4') # Right color sensor
 sColorL = ev3.ColorSensor('in1') # Left color sensor
 
@@ -31,6 +32,8 @@ sColorR.mode='COL-REFLECT'
 sColorL.mode='COL-REFLECT'
 sensor_val_R = sColorR.value()
 sensor_val_L = sColorL.value()
+#sColorTouch.mode='COL-COLOR'
+sColorTouch.mode='COL-REFLECT'
 
 mu = 7
 
@@ -67,15 +70,16 @@ while True:
 
     #print("Inputs: " + str(w_L) + " " + str(w_R) + ". Outputs: " + str(y_L) + " " + str(y_R ))
 
-    if sensor_val_R < 20:
-        print("Right sensor: Black")
-    if sensor_val_L < 20:
-        print("Left sensor: Black")
-    if sensor_val_R > 80:
-        print("Right sensor: White")
-    if sensor_val_L > 80:
-        print("Left sensor: White")
-
+    # if sensor_val_R < 20:
+    #     print("Right sensor: Black")
+    # if sensor_val_L < 20:
+    #     print("Left sensor: Black")
+    # if sensor_val_R > 80:
+    #     print("Right sensor: White")
+    # if sensor_val_L > 80:
+    #     print("Left sensor: White")
+    sensor_val_Touch = sColorTouch.value()
+    print(str( sensor_val_Touch ))
     #mLeft.duty_cycle_sp = -15 - Y_L
     #mRight.duty_cycle_sp = -15 - Y_R
 
