@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import ev3dev.ev3 as ev3
+import ev3dev.ev3 as ev3 
 from time import sleep
 import signal
 
@@ -29,7 +29,8 @@ sColorL = ev3.ColorSensor('in1') # Left color sensor
 # Reflected light, value between 0 and 100, ~80 white, ~5 black
 sColorR.mode='COL-REFLECT'
 sColorL.mode='COL-REFLECT'
-sColorVal = [sColorL.value(), sColorR.value()]
+sensor_val_R = sColorR.value()
+sensor_val_L = sColorL.value()
 
 mu = 7
 
@@ -46,7 +47,7 @@ while True:
     sensor_val_L_prev = sensor_val_L
     sensor_val_L = sColorL.value()
     
-    print("Color sensor left: " + sensor_val_L + "    right: " + sensor_val_R)
+    print("Color sensor left: " + str(sensor_val_L) + " right: " + str(sensor_val_R))
 
     # - - - LINE FOLLOWING - - -
     #sColorVal[0] = A = L
@@ -64,7 +65,16 @@ while True:
     #Y_L = w_b * sColorVal[1]
     #print(str(sColorVal[0]) + " " +str(sColorVal[1]) + " " +str(w_a) + " " + str(w_b) + " " + str(Y_R) + " " + str(Y_L))
 
-    print("Inputs: " + str(w_L) + " " + str(w_R) + ". Outputs: " + y_L + " " + y_R )
+    #print("Inputs: " + str(w_L) + " " + str(w_R) + ". Outputs: " + str(y_L) + " " + str(y_R ))
+
+    if sensor_val_R < 20:
+        print("Right sensor: Black")
+    if sensor_val_L < 20:
+        print("Left sensor: Black")
+    if sensor_val_R > 80:
+        print("Right sensor: White")
+    if sensor_val_L > 80:
+        print("Left sensor: White")
 
     #mLeft.duty_cycle_sp = -15 - Y_L
     #mRight.duty_cycle_sp = -15 - Y_R
