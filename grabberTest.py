@@ -20,11 +20,11 @@ while(True):
     mClaw.run_to_rel_pos(position_sp=grap, speed_sp=200, stop_action="coast")
 
     sleep(2)   # Give the motor time to move
+    mClaw.run_to_rel_pos(position_sp=release, speed_sp=100, stop_action="hold")
+    sleep(2)
 
     if btn.any():
         ev3.Sound.beep().wait()
-        mClaw.run_to_rel_pos(position_sp=release, speed_sp=100, stop_action="hold")
-        sleep(2)
         mClaw.duty_cycle_sp = 0
         exit()
 
