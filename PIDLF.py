@@ -44,6 +44,7 @@ integral   = 0
 derivative = 0
 last_error = 0
 error      = 0
+
 # - - - - - - - - - - CONTROL LOOP - - - - - - - - - -
 while True:
     # - - - LOAD SENSOR VALUES - - -
