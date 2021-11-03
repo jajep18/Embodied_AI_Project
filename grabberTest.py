@@ -5,10 +5,10 @@ import signal
 
 #sColorTouch = ev3.ColorSensor('in1') # Touch color sensor (claw)
 btn     = ev3.Button()           # Control block buttons
-mClaw  = ev3.LargeMotor('outB') # Claw motor
+mClaw  = ev3.MediumMotor('outB') # Claw motor
 
 #sColorTouch.mode='COL-COLOR'
-grap = -85
+grap = -285
 release = -grap
 
 mClaw.run_direct()
