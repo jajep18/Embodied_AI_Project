@@ -2,6 +2,7 @@
 import ev3dev.ev3 as ev3
 from time import sleep
 import signal
+import array
 
 #- - - - - - - - - - SETUP MOTORS - - - - - - - - - -
 mRight = ev3.LargeMotor('outA')  # Right wheel motor
@@ -42,9 +43,10 @@ Kd = 0.20553 #0.001
 # Components
 integral   = 0
 derivative = 0
-last_error = 0
+last_error = [0] * 10
 error      = 0
 error_sum  = 0
+integral_clamp = 20
 # - - - - - - - - - - CONTROL LOOP - - - - - - - - - -
 while True:
     # - - - LOAD SENSOR VALUES - - -
@@ -71,12 +73,25 @@ while True:
     last_error[1] = last_error[0]   
     last_error[0] = error           #Current error
 
+    ##################### Sum over error ###############################################
     error_sum = 0
     for i in range( 0 , len(last_error)-1 ):
         error_sum -= last_error[i] - last_error[i+1]
     
+    ##################### Integrator clamping to remove windup #########################
+    if(abs(integral) > integral_clamp and integral > 0):
+        integral = integral_clamp
+
+    elif(abs(integral) > integral_clamp and integral < 0):
+        integral = -integral_clamp
 
     turn_val = Kp * error + Ki * integral + Kp * derivative
+
+ 
+
+
+    
+
     #print("Turn value: " +str(turn_val))
     mRight_val = DRIVE_SPEED + int(turn_val)
     mLeft_val = DRIVE_SPEED - int(turn_val)
@@ -86,7 +101,7 @@ while True:
 
 
     sleep(0.01)
-    if btn.any():
+    if btn.any(): ######## If button pressed, end program
         ev3.Sound.beep().wait()
         mRight.duty_cycle_sp = 0
         mLeft.duty_cycle_sp = 0
