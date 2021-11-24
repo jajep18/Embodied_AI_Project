@@ -39,15 +39,16 @@ TARGET = 0 #(BLACK + WHITE ) / 2  # = 80 + 10 / 2 = 45
 
 # - - - - - - - - - - PID CONTROL - - - - - - - - - -
 # GAINS
-Kp = 6.6161  #0.42
-Ki = 2#0.53112  #0.0008
-Kd = 0.20553 #0.001
+Kp = 10.2 #6.6161  #0.42
+Ki = 1.3#1.5#3#0.53112  #0.0008
+Kd = 0.41#0.20553 #0.001
+BACKWARDS_GAIN = 2.5
 # Components
 integral   = 0
 derivative = 0
 last_error = 0
 error      = 0
-integral_clamp = 20
+integral_clamp = 5
 
 # - - - - - - - - - - FUNCTIONS - - - - - - - - - -
 def setMotorSP(motorHandle, sp_input): 
@@ -70,10 +71,11 @@ while True:
     last_error = error # Save last error for derivative
 
     # - - - - - - - - - - PID Line Follower - - - - - - - - - -
-    com_input = (sColorL_val - sColorR_val) / 10 #/2# If negative go left. If Positive go right
+    # INPUT / ERROR [-5;5]
+    com_input = (sColorL_val - sColorR_val) / 20 #/2# If negative go left. If Positive go right
     #print("Combined input =" + str(com_input))
     error = com_input - TARGET
-    integral = integral + error
+    integral = integral * (4/5) + error
     derivative = error - last_error #Current error - last 10 error values
     #print("Left sensor: " + str(sColorL_val) + " Right sensor " + str(sColorR_val) + " com_input: " + str(com_input))
     
@@ -89,13 +91,18 @@ while True:
     #turn_val = Kp * error + Ki * integral + Kd * derivative
     turn_val = Kp * error + Ki * integral + Kd * derivative
     #print("PID-P(error): " + str(error) + " I: " + str(integral) + " D: " + str(derivative))
- 
-
 
     #print("Turn value: " + str(turn_val))
-    DRIVE_SPEED_corr = DRIVE_SPEED * (abs(int(integral))-integral_clamp)/(-20)
-    mRight_val =  DRIVE_SPEED_corr + int(turn_val)
-    mLeft_val = DRIVE_SPEED_corr - int(turn_val)
+    DRIVE_SPEED_corr = DRIVE_SPEED #* (abs(int(integral))-integral_clamp)/(-20)
+    #mRight_val =  DRIVE_SPEED_corr + int(turn_val)
+    #mLeft_val = DRIVE_SPEED_corr - int(turn_val)
+    
+    if turn_val >= 0:
+        mRight_val = DRIVE_SPEED_corr + int(turn_val) 
+        mLeft_val  = DRIVE_SPEED_corr - int(turn_val) * BACKWARDS_GAIN
+    else:
+        mRight_val = DRIVE_SPEED_corr + int(turn_val) * BACKWARDS_GAIN
+        mLeft_val  = DRIVE_SPEED_corr - int(turn_val)
     #print("mRight: " + str(mRight_val) + "  mLeft: " + str(mLeft_val))
     #mRight.duty_cycle_sp = mRight_val
     #mLeft.duty_cycle_sp  = mLeft_val
