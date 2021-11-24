@@ -5,8 +5,8 @@ import signal
 import array
 
 #- - - - - - - - - - SETUP MOTORS - - - - - - - - - -
-mRight = ev3.LargeMotor('outA')  # Right wheel motor
-mLeft  = ev3.LargeMotor('outD')  # Left wheel motor
+mRight = ev3.LargeMotor('outD')  # Right wheel motor
+mLeft  = ev3.LargeMotor('outA')  # Left wheel motor
 mClaw  = ev3.LargeMotor('outC') # Claw motor
 
 mRight.run_direct()
@@ -16,7 +16,7 @@ mClaw.run_direct()
 NONTURN_SPEED = 30
 TURN_SPEED  = 60
 DRIVE_SPEED = 40
-GRAB_ANGLE  = 100 #85
+GRAB_ANGLE  = -100 #85
 RELEASE_ANGLE = -GRAB_ANGLE
 
 # - - - - - - - - - - SETUP SENSORS - - - - - - - - - -
@@ -34,21 +34,22 @@ sColorL.mode='COL-REFLECT'
 WHITE = 80
 BLACK = 10
 TARGET = 0 #(BLACK + WHITE ) / 2  # = 80 + 10 / 2 = 45
-#THRESHOLD_1 = ((WHITE - BLACK) / 3) + BLACK
-#THRESHOLD_2 = WHITE - ((WHITE - BLACK) / 3)
 
 # - - - - - - - - - - PID CONTROL - - - - - - - - - -
 # GAINS
-Kp = 10.2 #6.6161  #0.42
-Ki = 1.3#1.5#3#0.53112  #0.0008
-Kd = 0.41#0.20553 #0.001
-BACKWARDS_GAIN = 2.5
+d_T = 0.0141 #[ms]
+K_c = 50
+P_c = 0.75
+Kp =  50#30  #0.6 * K_c                  #12.2 #6.6161  #0.42
+Ki =  1.128#1.128  #2 * Kp * d_T / P_c         #2.5#1.3#1.5#3#0.53112  #0.0008
+Kd =  15#199.47  #Kp * P_c / (8*d_T)         #4.84
+BACKWARDS_GAIN = 1             # 2.2#2.5
 # Components
 integral   = 0
 derivative = 0
 last_error = 0
 error      = 0
-integral_clamp = 5
+integral_clamp = 10
 
 # - - - - - - - - - - FUNCTIONS - - - - - - - - - -
 def setMotorSP(motorHandle, sp_input): 
@@ -56,29 +57,28 @@ def setMotorSP(motorHandle, sp_input):
     sp_input_n = - sp_input
     if(sp_input_n > 100):
         motorHandle.duty_cycle_sp = 100
-        #print("Upper limit motor cap exceeded")
     elif(sp_input_n < -100):
         motorHandle.duty_cycle_sp = -100
-        #print("Lower limit motor cap exceeded")
     else:
         motorHandle.duty_cycle_sp = sp_input_n
 
 # - - - - - - - - - - CONTROL LOOP - - - - - - - - - -
+
+ev3.Sound.beep().wait()
 while True:
+    
     # - - - LOAD SENSOR VALUES - - -
     sColorL_val= sColorL.value()
     sColorR_val= sColorR.value()
     last_error = error # Save last error for derivative
 
     # - - - - - - - - - - PID Line Follower - - - - - - - - - -
-    # INPUT / ERROR [-5;5]
-    com_input = (sColorL_val - sColorR_val) / 20 #/2# If negative go left. If Positive go right
-    #print("Combined input =" + str(com_input))
+    # INPUT / ERROR = [-5;5]
+    com_input = (sColorR_val - sColorL_val) / 20 #/2# If negative go left. If Positive go right
+    #print("Error L: " + str(sColorL_val )+ "Error R: " + str(sColorR_val))
     error = com_input - TARGET
-    integral = integral * (4/5) + error
+    integral = integral * (3/4) + error
     derivative = error - last_error #Current error - last 10 error values
-    #print("Left sensor: " + str(sColorL_val) + " Right sensor " + str(sColorR_val) + " com_input: " + str(com_input))
-    
     
     
     ##################### Integrator clamping to remove windup #########################
@@ -88,29 +88,30 @@ while True:
     elif(abs(integral) > integral_clamp and integral < 0):
         integral = -integral_clamp
 
-    #turn_val = Kp * error + Ki * integral + Kd * derivative
-    turn_val = Kp * error + Ki * integral + Kd * derivative
-    #print("PID-P(error): " + str(error) + " I: " + str(integral) + " D: " + str(derivative))
 
-    #print("Turn value: " + str(turn_val))
-    DRIVE_SPEED_corr = DRIVE_SPEED #* (abs(int(integral))-integral_clamp)/(-20)
+    turn_val = Kp * error + Ki * integral + Kd * derivative
+
+    
+    
+    DRIVE_SPEED_corr = DRIVE_SPEED * (1 - abs(error)/3)
+    
+     #* (abs(int(integral))-integral_clamp)/(-20)
     #mRight_val =  DRIVE_SPEED_corr + int(turn_val)
     #mLeft_val = DRIVE_SPEED_corr - int(turn_val)
     
     if turn_val >= 0:
         mRight_val = DRIVE_SPEED_corr + int(turn_val) 
-        mLeft_val  = DRIVE_SPEED_corr - int(turn_val) * BACKWARDS_GAIN
+        mLeft_val  = DRIVE_SPEED_corr - int(turn_val) * BACKWARDS_GAIN #(1 + ( BACKWARDS_GAIN*abs(error) ) / 5)
     else:
-        mRight_val = DRIVE_SPEED_corr + int(turn_val) * BACKWARDS_GAIN
+        mRight_val = DRIVE_SPEED_corr + int(turn_val) * BACKWARDS_GAIN #(1 + ( BACKWARDS_GAIN*abs(error) ) / 5)
         mLeft_val  = DRIVE_SPEED_corr - int(turn_val)
     #print("mRight: " + str(mRight_val) + "  mLeft: " + str(mLeft_val))
-    #mRight.duty_cycle_sp = mRight_val
-    #mLeft.duty_cycle_sp  = mLeft_val
+
     setMotorSP(mRight, mRight_val)
     setMotorSP(mLeft, mLeft_val)
 
-    #sleep(1)
-    sleep(0.01)
+    
+    #sleep(0.001)
     ##################### If button pressed, end program ###############################
     if btn.any(): ######## 
         ev3.Sound.beep().wait()
@@ -120,11 +121,14 @@ while True:
         exit()
 
     ##################### Grab can in front of robot ###############################
-    if sLightC.value() >= 500:
-        mRight.duty_cycle_sp = 0
-        mLeft.duty_cycle_sp = 0
-        mClaw.run_to_rel_pos(position_sp=GRAB_ANGLE, speed_sp=200, stop_action="hold")
-        sleep(2)   # Give the motor time to move
-        mClaw.run_to_rel_pos(position_sp=RELEASE_ANGLE, speed_sp=100, stop_action="coast")
-        sleep(2)
-        #TODO: Add turning around - Dont let go of can again
+    # if sLightC.value() >= 500:
+    #     mRight.duty_cycle_sp = 0
+    #     mLeft.duty_cycle_sp = 0
+    #     mClaw.run_to_rel_pos(position_sp=GRAB_ANGLE, speed_sp=200, stop_action="hold")
+    #     sleep(2)   # Give the motor time to move
+    #     mClaw.run_to_rel_pos(position_sp=RELEASE_ANGLE, speed_sp=100, stop_action="coast")
+    #     sleep(2)
+    #     #TODO: Add turning around - Dont let go of can again
+# setMotorSP(mRight, 0)
+# setMotorSP(mLeft, 0)
+# ev3.Sound.beep().wait()
