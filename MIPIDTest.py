@@ -98,7 +98,7 @@ while True:
     
     ##################### Integrator clamping to remove windup #########################
     if(abs(integral) > integral_clamp and integral > 0):
-        integral = integral_clamp
+        integral = integral_clamp   
 
     elif(abs(integral) > integral_clamp and integral < 0):
         integral = -integral_clamp
