@@ -39,44 +39,16 @@ TARGET = 0 #(BLACK + WHITE ) / 2  # = 80 + 10 / 2 = 45
 
 # - - - - - - - - - - PID CONTROL - - - - - - - - - -
 # GAINS
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 6c97335654b9f6063225876b3962d00e406d82ae
->>>>>>> 7266f1c54ed9f1d760059e4a316cb1f700449aa4
 Kp = 10.2 #6.6161  #0.42
 Ki = 1.3#1.5#3#0.53112  #0.0008
 Kd = 0.41#0.20553 #0.001
 BACKWARDS_GAIN = 2.5
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-=======
-Kp = 6.6161  #0.42
-Ki = 2#0.53112  #0.0008
-Kd = 0.20553 #0.001
->>>>>>> 4b59d8457e855cd3422f529fcb3abbce6d28f6d0
->>>>>>> 6c97335654b9f6063225876b3962d00e406d82ae
->>>>>>> 7266f1c54ed9f1d760059e4a316cb1f700449aa4
 # Components
 integral   = 0
 derivative = 0
 last_error = 0
 error      = 0
 integral_clamp = 5
-<<<<<<< HEAD
-=======
-=======
-<<<<<<< HEAD
-integral_clamp = 5
-=======
-integral_clamp = 20
->>>>>>> 4b59d8457e855cd3422f529fcb3abbce6d28f6d0
->>>>>>> 6c97335654b9f6063225876b3962d00e406d82ae
->>>>>>> 7266f1c54ed9f1d760059e4a316cb1f700449aa4
 
 # - - - - - - - - - - FUNCTIONS - - - - - - - - - -
 def setMotorSP(motorHandle, sp_input): 
@@ -104,23 +76,6 @@ while True:
     #print("Combined input =" + str(com_input))
     error = com_input - TARGET
     integral = integral * (4/5) + error
-<<<<<<< HEAD
-=======
-=======
-<<<<<<< HEAD
-    # INPUT / ERROR [-5;5]
-    com_input = (sColorL_val - sColorR_val) / 20 #/2# If negative go left. If Positive go right
-    #print("Combined input =" + str(com_input))
-    error = com_input - TARGET
-    integral = integral * (4/5) + error
-=======
-    com_input = (sColorL_val - sColorR_val) / 10 #/2# If negative go left. If Positive go right
-    #print("Combined input =" + str(com_input))
-    error = com_input - TARGET
-    integral = integral + error
->>>>>>> 4b59d8457e855cd3422f529fcb3abbce6d28f6d0
->>>>>>> 6c97335654b9f6063225876b3962d00e406d82ae
->>>>>>> 7266f1c54ed9f1d760059e4a316cb1f700449aa4
     derivative = error - last_error #Current error - last 10 error values
     #print("Left sensor: " + str(sColorL_val) + " Right sensor " + str(sColorR_val) + " com_input: " + str(com_input))
     
@@ -148,33 +103,6 @@ while True:
     else:
         mRight_val = DRIVE_SPEED_corr + int(turn_val) * BACKWARDS_GAIN
         mLeft_val  = DRIVE_SPEED_corr - int(turn_val)
-<<<<<<< HEAD
-=======
-=======
-<<<<<<< HEAD
-
-    #print("Turn value: " + str(turn_val))
-    DRIVE_SPEED_corr = DRIVE_SPEED #* (abs(int(integral))-integral_clamp)/(-20)
-    #mRight_val =  DRIVE_SPEED_corr + int(turn_val)
-    #mLeft_val = DRIVE_SPEED_corr - int(turn_val)
-    
-    if turn_val >= 0:
-        mRight_val = DRIVE_SPEED_corr + int(turn_val) 
-        mLeft_val  = DRIVE_SPEED_corr - int(turn_val) * BACKWARDS_GAIN
-    else:
-        mRight_val = DRIVE_SPEED_corr + int(turn_val) * BACKWARDS_GAIN
-        mLeft_val  = DRIVE_SPEED_corr - int(turn_val)
-=======
- 
-
-
-    #print("Turn value: " + str(turn_val))
-    DRIVE_SPEED_corr = DRIVE_SPEED * (abs(int(integral))-integral_clamp)/(-20)
-    mRight_val =  DRIVE_SPEED_corr + int(turn_val)
-    mLeft_val = DRIVE_SPEED_corr - int(turn_val)
->>>>>>> 4b59d8457e855cd3422f529fcb3abbce6d28f6d0
->>>>>>> 6c97335654b9f6063225876b3962d00e406d82ae
->>>>>>> 7266f1c54ed9f1d760059e4a316cb1f700449aa4
     #print("mRight: " + str(mRight_val) + "  mLeft: " + str(mLeft_val))
     #mRight.duty_cycle_sp = mRight_val
     #mLeft.duty_cycle_sp  = mLeft_val
