@@ -5,6 +5,7 @@ from time import sleep
 import signal
 import array
 import csv
+from datetime import datetime
 
 #- - - - - - - - - - SETUP MOTORS - - - - - - - - - -
 mRight = ev3.LargeMotor('outD')  # Right wheel motor
@@ -36,7 +37,7 @@ sColorL.mode='COL-REFLECT'
 sGyro.mode = 'GYRO-RATE'
 sleep(0.5)
 #gyro_offset = sGyro.value()
-beta_gyro = 0.98
+beta_gyro = 0.92
 
 # - - - - - - - - - - DATA LOGS  - - - - - - - - - -
 error_log       = []
@@ -46,6 +47,7 @@ sColorR_log     = []
 sLightC_log     = []
 sGyro_log       = []
 GyroAng_log     = []
+state_log       = []
 
 
 # - - - - - - - - - - PID CONTROL - - - - - - - - - -
@@ -84,7 +86,7 @@ rs_down = "down"
 
 ramp_speeds = {}
 ramp_speeds[rs_flat] =  0
-ramp_speeds[rs_up]   = 20
+ramp_speeds[rs_up]   = 15
 ramp_speeds[rs_down] =-20
 
 ramp_state = rs_flat
@@ -109,6 +111,11 @@ while exit_cond:
     # INPUT / ERROR = [-5;5]
     com_input = (sColorR_val - sColorL_val) / 20 #/2# If negative go left. If Positive go right
     error = com_input - TARGET
+
+    # Error clamping to prevent driving backwards
+    if abs(error) > error_max:
+        error = error_max * error/abs(error)
+
     integral = integral * 0.90 + error 
     derivative = error - last_error #Current error - last 10 error values
     
@@ -134,11 +141,16 @@ while exit_cond:
             ramp_state = rs_flat
             GyroAng = 0
 
-    # Error clamping to prevent driving backwards
-    if abs(error) > error_max:
-        error = error_max * error/abs(error)
+    # # Error clamping to prevent driving backwards
+    # if abs(error) > error_max:
+    #     error = error_max * error/abs(error)
+
+    if ramp_state == rs_flat:
+        DRIVE_SPEED_corr = DRIVE_SPEED * (1 - abs(error)/error_max) #+ ramp_speeds[ramp_state]
+    else:
+        DRIVE_SPEED_corr = DRIVE_SPEED + ramp_speeds[ramp_state]
     
-    DRIVE_SPEED_corr = DRIVE_SPEED * (1 - abs(error)/error_max) + ramp_speeds[ramp_state]
+    
     if turn_val >= 0:
         mRight_val = DRIVE_SPEED_corr + int(turn_val) 
         mLeft_val  = DRIVE_SPEED_corr - int(turn_val) * BACKWARDS_GAIN #(1 + ( BACKWARDS_GAIN*abs(error) ) / 5)
@@ -156,25 +168,25 @@ while exit_cond:
     # elif gyro_val < -20:
     #     DRIVE_SPEED = 40
 
-    ##################### Grab can in front of robot ###############################
-    # if (sLightC_val >= 300) and not can_flag:
-    #     ev3.Sound.beep().wait()
-    #     mRight.duty_cycle_sp = 0
-    #     mLeft.duty_cycle_sp = 0
-    #     mClaw.run_to_rel_pos(position_sp=GRAB_ANGLE, speed_sp=200, stop_action="hold")
-    #     sleep(1)   # Give the motor time to move
-    #     #mClaw.run_to_rel_pos(position_sp=RELEASE_ANGLE, speed_sp=100, stop_action="coast")
-    #     setMotorSP(mRight, -TURN_SPEED)
-    #     setMotorSP(mLeft,   TURN_SPEED)
-    #     sleep(1.2)
-    #     sColorR_val= sColorR.value() #Load new sensor value
-    #     while sColorR_val > 20:
-    #         sColorR_val= sColorR.value() #Load new sensor value
-    #         sleep(0.001)
-    #     integral   = 0 #Reset PID
-    #     last_error = 0 #Reset PID
-    #     can_flag = True #Set flag that can has been grabbed
-    #     ev3.Sound.beep().wait()
+    #################### Grab can in front of robot ###############################
+    if (sLightC_val >= 300) and not can_flag:
+        ev3.Sound.beep().wait()
+        mRight.duty_cycle_sp = 0
+        mLeft.duty_cycle_sp = 0
+        mClaw.run_to_rel_pos(position_sp=GRAB_ANGLE, speed_sp=200, stop_action="hold")
+        sleep(1)   # Give the motor time to move
+        #mClaw.run_to_rel_pos(position_sp=RELEASE_ANGLE, speed_sp=100, stop_action="coast")
+        setMotorSP(mRight, -TURN_SPEED)
+        setMotorSP(mLeft,   TURN_SPEED)
+        sleep(1.2)
+        sColorR_val= sColorR.value() #Load new sensor value
+        while sColorR_val > 20:
+            sColorR_val= sColorR.value() #Load new sensor value
+            sleep(0.001)
+        integral   = 0 #Reset PID
+        last_error = 0 #Reset PID
+        can_flag = True #Set flag that can has been grabbed
+        ev3.Sound.beep().wait()
 
     # - - - LOG DATA - - -
     error_log   .append(error)
@@ -184,6 +196,7 @@ while exit_cond:
     sLightC_log .append(sLightC_val)
     sGyro_log   .append(sGyro_val)
     GyroAng_log .append(GyroAng)
+    state_log   .append(ramp_state)
 
     ##################### If button pressed, end program ###############################
     if btn.any(): ########
@@ -195,11 +208,13 @@ while exit_cond:
 #- - - - - - - - - - END PROGRAM - - - - - - - - - -
 if can_flag:
     mClaw.run_to_rel_pos(position_sp=RELEASE_ANGLE, speed_sp=100, stop_action="coast")
-
+ev3.Sound.beep().wait()
 # - - - Write data logs to csv - - -
-with open('test_data.csv', 'w') as f:
+now = datetime.now()
+dt_string = now.strftime("%d:%m_%H:%M")
+with open('test_data/test_data_'+dt_string+'.csv', 'w') as f:
     for i in range(len(error_log)):
-        f.write("{};{};{};{};{};{};{};{};\n".format(
+        f.write("{};{};{};{};{};{};{};{};{};\n".format(
             i, 
             error_log[i], 
             integral_log[i],
@@ -207,6 +222,7 @@ with open('test_data.csv', 'w') as f:
             sColorR_log[i], 
             sLightC_log[i],
             sGyro_log[i], 
-            GyroAng_log[i]))
+            GyroAng_log[i],
+            state_log[i]))
     #for element in sGyro_log:
     #    f.write("{};\n".format(element))
