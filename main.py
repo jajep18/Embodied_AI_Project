@@ -50,7 +50,7 @@ GyroAng_log     = []
 
 # - - - - - - - - - - PID CONTROL - - - - - - - - - -
 # GAINS
-Kp =  25#30  #0.6 * K_c                  #12.2 #6.6161  #0.42
+Kp =  25#22.5#25#30  #0.6 * K_c                  #12.2 #6.6161  #0.42
 Ki =  2#1.128#1.128  #2 * Kp * d_T / P_c         #2.5#1.3#1.5#3#0.53112  #0.0008
 Kd =  5#10#199.47  #Kp * P_c / (8*d_T)         #4.84
 BACKWARDS_GAIN = 1# 1.2             # 2.2#2.5
@@ -109,7 +109,7 @@ while exit_cond:
     # INPUT / ERROR = [-5;5]
     com_input = (sColorR_val - sColorL_val) / 20 #/2# If negative go left. If Positive go right
     error = com_input - TARGET
-    integral = integral * (3/4) + error
+    integral = integral * 0.90 + error 
     derivative = error - last_error #Current error - last 10 error values
     
     #Integrator clamping to remove windup
@@ -147,8 +147,8 @@ while exit_cond:
         mLeft_val  = DRIVE_SPEED_corr - int(turn_val)
     #print("mRight: " + str(mRight_val) + "  mLeft: " + str(mLeft_val))
 
-    #setMotorSP(mRight, mRight_val)
-    #setMotorSP(mLeft, mLeft_val)
+    setMotorSP(mRight, mRight_val)
+    setMotorSP(mLeft, mLeft_val)
     print("RS: " + str(ramp_state) + " GyroAng: " + "{:.4f}".format(GyroAng) + " GyroSpeed" + "{:.4f}".format(sGyro_val))
     
     # if gyro_val > 20:
